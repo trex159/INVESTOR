@@ -59,7 +59,8 @@ const stockNames = {
   "CARL-B.CO": "Carlsberg A/S",
   "BUD": "Budweiser Brewing Co.",
   "SAM": "Boston Beer Co.",
-  "DGE.L": "Diageo PLC"
+  "DGE.L": "Diageo PLC",
+  "RHM.DE": "Rheinmetall AG"
 };
 
 const stockInfos = {
@@ -514,29 +515,74 @@ newsTicker.style.borderTop = "2px solid #2c3957";
 newsTicker.style.display = "flex";
 newsTicker.style.alignItems = "center";
 newsTicker.style.paddingLeft = "0";
-newsTicker.innerHTML = `<div id="news-ticker-inner" style="white-space:nowrap;display:inline-block;position:relative;will-change:transform;"></div>`;
+newsTicker.style.transition = "opacity 0.5s";
+newsTicker.innerHTML = `
+  <div id="news-ticker-inner" style="white-space:nowrap;display:inline-block;position:relative;will-change:transform;"></div>
+  <input id="news-ticker-speed" type="range" min="20" max="200" value="60" style="margin-left:auto;margin-right:18px;width:120px;vertical-align:middle;">
+`;
 document.body.appendChild(newsTicker);
 
-function updateNewsTicker(symbol) {
+let tickerAnimationId = null;
+let tickerSpeed = 60; // px/s
+
+const newsTickerSpeedInput = document.getElementById("news-ticker-speed");
+newsTickerSpeedInput.title = "Ticker-Geschwindigkeit";
+newsTickerSpeedInput.addEventListener("input", function () {
+  tickerSpeed = parseInt(this.value, 10);
+  updateNewsTicker(stockSelect.value, true);
+});
+
+function updateNewsTicker(symbol, immediate = false) {
   const text = stockInfos[symbol] || "Keine Informationen zu diesem Unternehmen verfügbar.";
   const cleanText = text.replace(/<[^>]+>/g, ""); // HTML-Tags entfernen
   const tickerText = `+++ ${cleanText} +++`;
+
   const inner = document.getElementById("news-ticker-inner");
-  inner.textContent = tickerText;
+  // Für Loop: Text doppelt mit Abstand
+  inner.textContent = "";
+  const span1 = document.createElement("span");
+  span1.textContent = tickerText + "   ";
+  const span2 = document.createElement("span");
+  span2.textContent = tickerText + "   ";
+  inner.appendChild(span1);
+  inner.appendChild(span2);
 
-  // Animation zurücksetzen
+  // Animation ggf. abbrechen
+  if (tickerAnimationId) {
+    cancelAnimationFrame(tickerAnimationId);
+    tickerAnimationId = null;
+  }
+
+  // Für sanften Übergang bei Wechsel
+  if (!immediate) {
+    newsTicker.style.opacity = "0";
+    setTimeout(() => {
+      startTickerLoop(inner, span1, span2);
+      newsTicker.style.opacity = "1";
+    }, 350);
+  } else {
+    startTickerLoop(inner, span1, span2);
+    newsTicker.style.opacity = "1";
+  }
+}
+
+function startTickerLoop(inner, span1, span2) {
+  // Setze beide Spans nebeneinander
+  const textWidth = span1.offsetWidth;
+  let pos = 0;
+  function loop() {
+    pos -= tickerSpeed / 60; // px pro Frame (bei 60fps)
+    if (Math.abs(pos) >= textWidth) {
+      pos += textWidth;
+    }
+    inner.style.transform = `translateX(${pos}px)`;
+    tickerAnimationId = requestAnimationFrame(loop);
+  }
+  // Reset
   inner.style.transition = "none";
-  inner.style.transform = `translateX(${newsTicker.offsetWidth}px)`;
-
-  // Nach kurzem Timeout Animation starten
-  setTimeout(() => {
-    const textWidth = inner.offsetWidth;
-    const containerWidth = newsTicker.offsetWidth;
-    const distance = textWidth + containerWidth;
-    const duration = Math.max(10, distance / 60); // Geschwindigkeit: px/s
-    inner.style.transition = `transform ${duration}s linear`;
-    inner.style.transform = `translateX(-${textWidth}px)`;
-  }, 100);
+  inner.style.transform = "translateX(0px)";
+  pos = 0;
+  tickerAnimationId = requestAnimationFrame(loop);
 }
 
 function updateStockInfo(symbol) {
@@ -582,5 +628,6 @@ window.onload = () => {
   autoRefresh = autoRefreshToggle.checked;
   setupAutoRefresh();
   // Newsticker initialisieren
-  updateNewsTicker(stockSelect.value);
+  tickerSpeed = parseInt(newsTickerSpeedInput.value, 10);
+  updateNewsTicker(stockSelect.value, true);
 };
