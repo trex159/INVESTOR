@@ -1,0 +1,293 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #181f2a;
+  color: #e6eaf3;
+  padding: 0;
+  margin: 0;
+  min-height: 100vh;
+}
+
+#guide {
+  max-width: 800px;
+  margin: 32px auto 0 auto;
+  background: #232b39;
+  border-radius: 10px;
+  box-shadow: 0 2px 16px #000a;
+  padding: 22px 28px 16px 28px;
+  color: #bfc9db;
+  font-size: 1.08em;
+  border-left: 4px solid #1f8c43;
+}
+
+#guide h2 {
+  margin-top: 0;
+  color: #1f8c43;
+  font-size: 1.3em;
+  margin-bottom: 10px;
+}
+
+#guide ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+#guide li {
+  margin-bottom: 7px;
+}
+
+#app {
+  max-width: 900px;
+  margin: 24px auto 0 auto;
+  background: #202634;
+  padding: 26px 28px 18px 28px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px #000b;
+}
+
+h1 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 2em;
+  letter-spacing: 1px;
+  color: #e6eaf3;
+  text-shadow: 0 2px 8px #1f8c4333;
+}
+
+.balance-section, .investments, .chart-section {
+  margin-bottom: 26px;
+}
+
+#balance {
+  font-size: 1.18em;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #1f8c43;
+}
+
+select, input[type="number"] {
+  padding: 10px 12px;
+  margin-right: 12px;
+  border-radius: 6px;
+  border: 1.5px solid #2e3748;
+  background: #232b39;
+  color: #e6eaf3;
+  font-size: 1em;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-shadow: 0 1px 4px #0004;
+}
+
+select:focus, input[type="number"]:focus {
+  border: 2px solid #1f8c43;
+  background: #232b39;
+  box-shadow: 0 2px 8px #1f8c4333;
+}
+
+button {
+  padding: 10px 18px;
+  background: #1f8c43;
+  color: #e6eaf3;
+  border: none;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #0006;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+
+button:hover {
+  background: #2e3748;
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 4px 16px #1f8c4333;
+}
+
+button:disabled {
+  background-color: #353535;
+  color: #535353;
+  cursor: not-allowed;
+  box-shadow: 0 1px 4px #0002;
+}
+
+.balance-section button {
+  margin-right: 6px;
+  margin-top: 6px;
+}
+
+.stats-section {
+  background: #232b39;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px #0007;
+  padding: 14px 14px 8px 14px;
+  margin-bottom: 26px;
+}
+
+.stats-section h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #e6eaf3;
+  font-size: 1.1em;
+}
+
+#stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#stats-list li {
+  font-size: 1em;
+  margin-bottom: 6px;
+  color: #bfc9db;
+  font-weight: 500;
+}
+
+#auto-refresh-label, #refresh-speed-label {
+  user-select: none;
+  cursor: pointer;
+  color: #bfc9db;
+  margin-left: 18px;
+}
+
+#auto-refresh-toggle, #refresh-speed {
+  accent-color: #1f8c43;
+  margin-right: 4px;
+  background: #232b39;
+  color: #e6eaf3;
+  border: 1px solid #2e3748;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.investments h2 {
+  margin-bottom: 10px;
+  color: #e6eaf3;
+  font-size: 1.15em;
+  letter-spacing: 0.5px;
+}
+
+/* Investment-Liste als Tabelle */
+#investment-list {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  padding: 0;
+}
+
+#investment-list li {
+  display: table-row;
+  background: #232b39;
+  color: #e6eaf3;
+  border-bottom: 1px solid #2e3748;
+  font-size: 1em;
+  transition: background 0.2s;
+}
+
+#investment-list li:nth-child(even) {
+  background: #202634;
+}
+
+#investment-list li[style*="opacity: 0.6"] {
+  background: #353535 !important;
+  color: #bfc9db;
+}
+
+#investment-list li > * {
+  display: table-cell;
+  padding: 8px 8px 8px 0;
+  vertical-align: middle;
+}
+
+.investment-date,
+.investment-symbol {
+  font-weight: 500;
+  color: #bfc9db;
+}
+
+.investment-amount {
+  color: #e6eaf3;
+}
+
+.investment-profit,
+.investment-value {
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 1em;
+  text-align: right;
+}
+
+.investment-actions {
+  text-align: right;
+}
+
+.trend-up {
+  color: #1f8c43;
+  font-weight: bold;
+}
+.trend-down {
+  color: #e03a3a;
+  font-weight: bold;
+}
+.trend-neutral {
+  color: #bfc9db;
+}
+
+.chart-section {
+  background: #232b39;
+  border-radius: 10px;
+  box-shadow: 0 1px 8px #0005;
+  padding: 18px 14px 14px 14px;
+  position: relative;
+}
+
+#stock-chart {
+  background: #181f2a;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px #0007;
+  padding: 10px;
+  width: 100% !important;
+  max-width: 100%;
+  height: 340px !important;
+  margin-top: 10px;
+}
+
+#chart-type {
+  accent-color: #1f8c43;
+  margin-left: 6px;
+  background: #232b39;
+  color: #e6eaf3;
+  border: 1px solid #2e3748;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+#trend-indicator {
+  margin-top: 10px;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  #app, #guide {
+    padding: 12px 4vw;
+    border-radius: 8px;
+  }
+  h1 {
+    font-size: 1.2em;
+  }
+  #stock-chart {
+    height: 220px !important;
+  }
+  .balance-section button {
+    margin-top: 8px;
+    margin-bottom: 4px;
+    width: 100%;
+    display: block;
+  }
+  #investment-list li > * {
+    padding: 6px 2px 6px 0;
+    font-size: 0.97em;
+  }
+}
