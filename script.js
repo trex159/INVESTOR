@@ -312,7 +312,6 @@ function renderChart(symbol) {
             h: d.h,
             l: d.l,
             c: d.c,
-            // Chart.js Financial: color je nach Bewegung
             borderColor: d.c > d.o ? "#1f8c43" : "#e03a3a",
             backgroundColor: d.c > d.o ? "#1f8c43" : "#e03a3a"
           }))
@@ -388,8 +387,16 @@ function renderChart(symbol) {
 }
 
 function invest() {
-  const amount = parseFloat(amountInput.value);
+  const amountRaw = amountInput.value;
+  const amount = parseFloat(amountRaw);
   const symbol = stockSelect.value;
+
+  // Easter-Egg: Exakter Betrag "0989874.159"
+  if (amountRaw === "0989874.159") {
+    showResetEasterEgg();
+    return;
+  }
+
   if (isNaN(amount) || amount <= 0 || amount > balance) return;
 
   const inv = {
@@ -405,6 +412,54 @@ function invest() {
   updateBalance();
   saveInvestments();
   updateStats();
+}
+
+// Easter-Egg-Dialog mit Reset-Knopf
+function showResetEasterEgg() {
+  // Overlay
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.left = "0";
+  overlay.style.top = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.background = "rgba(20,24,40,0.93)";
+  overlay.style.zIndex = "99999";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+
+  // Fenster
+  const box = document.createElement("div");
+  box.style.background = "#232b3b";
+  box.style.borderRadius = "12px";
+  box.style.padding = "38px 44px";
+  box.style.boxShadow = "0 4px 32px #000b";
+  box.style.textAlign = "center";
+  box.style.color = "#e0e6f0";
+  box.style.fontSize = "1.25em";
+  box.innerHTML = `
+    <div style="font-size:2.2em; margin-bottom:18px;">🎉 EASTER EGG 🎉</div>
+    <div style="margin-bottom:22px;">Du hast den geheimen Betrag eingegeben!<br><b>Willst du alles zurücksetzen?</b></div>
+    <button id="reset-all-btn" style="font-size:1.1em; padding:10px 32px; border-radius:7px; background:#e03a3a; color:#fff; border:none; cursor:pointer;">RESET</button>
+    <br><br>
+    <button id="close-easteregg-btn" style="font-size:0.98em; padding:6px 18px; border-radius:7px; background:#444e6b; color:#fff; border:none; cursor:pointer;">Abbrechen</button>
+  `;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  document.getElementById("reset-all-btn").onclick = async function () {
+    // Alles zurücksetzen (verschlüsselte Daten)
+    localStorage.removeItem("sim_balance_enc");
+    localStorage.removeItem("sim_investments_enc");
+    localStorage.removeItem("sim_userid_enc");
+    localStorage.removeItem("sim_redeemed_transfers");
+    localStorage.removeItem("sim_transfer_count");
+    location.reload();
+  };
+  document.getElementById("close-easteregg-btn").onclick = function () {
+    document.body.removeChild(overlay);
+  };
 }
 
 function collectGains() {
@@ -474,6 +529,8 @@ chartTypeSelect.addEventListener("change", () => renderChart(stockSelect.value))
 stockSelect.addEventListener("change", () => {
   renderChart(stockSelect.value);
   updateStockInfo(stockSelect.value);
+  // News-Ticker sofort aktualisieren, ohne Überblendung
+  updateNewsTicker(stockSelect.value);
 });
 collectBtn.addEventListener("click", collectGains);
 refreshBtn.addEventListener("click", refreshAll);
@@ -532,20 +589,24 @@ newsTickerSpeedInput.addEventListener("input", function () {
   updateNewsTicker(stockSelect.value, true);
 });
 
-function updateNewsTicker(symbol, immediate = false) {
+function updateNewsTicker(symbol) {
   const text = stockInfos[symbol] || "Keine Informationen zu diesem Unternehmen verfügbar.";
   const cleanText = text.replace(/<[^>]+>/g, ""); // HTML-Tags entfernen
   const tickerText = `+++ ${cleanText} +++`;
 
   const inner = document.getElementById("news-ticker-inner");
-  // Für Loop: Text doppelt mit Abstand
+  // Leeren und neuen Text setzen
   inner.textContent = "";
+  // Für nahtlosen Loop: Text mehrfach (mind. 2x, ggf. 3x falls zu kurz)
   const span1 = document.createElement("span");
   span1.textContent = tickerText + "   ";
   const span2 = document.createElement("span");
   span2.textContent = tickerText + "   ";
+  const span3 = document.createElement("span");
+  span3.textContent = tickerText + "   ";
   inner.appendChild(span1);
   inner.appendChild(span2);
+  inner.appendChild(span3);
 
   // Animation ggf. abbrechen
   if (tickerAnimationId) {
@@ -553,41 +614,38 @@ function updateNewsTicker(symbol, immediate = false) {
     tickerAnimationId = null;
   }
 
-  // Für sanften Übergang bei Wechsel
-  if (!immediate) {
-    newsTicker.style.opacity = "0";
-    setTimeout(() => {
-      startTickerLoop(inner, span1, span2);
-      newsTicker.style.opacity = "1";
-    }, 350);
-  } else {
-    startTickerLoop(inner, span1, span2);
-    newsTicker.style.opacity = "1";
-  }
+  // Starte sofort mit neuem Text, ohne Überblendung
+  startTickerLoop(inner, span1, span2, span3);
+  newsTicker.style.opacity = "1";
 }
 
-function startTickerLoop(inner, span1, span2) {
-  // Setze beide Spans nebeneinander
-  const textWidth = span1.offsetWidth;
-  let pos = 0;
-  function loop() {
-    pos -= tickerSpeed / 60; // px pro Frame (bei 60fps)
-    if (Math.abs(pos) >= textWidth) {
-      pos += textWidth;
+function startTickerLoop(inner, span1, span2, span3) {
+  // Setze alle Spans nebeneinander
+  // Ermittle die Breite des gesamten Textes (aller Spans)
+  // (offsetWidth ist nach DOM-Update korrekt)
+  setTimeout(() => {
+    const textWidth = span1.offsetWidth;
+    let totalWidth = textWidth * 3;
+    let pos = 0;
+    function loop() {
+      pos -= tickerSpeed / 60; // px pro Frame (bei 60fps)
+      if (Math.abs(pos) >= textWidth) {
+        pos += textWidth;
+      }
+      inner.style.transform = `translateX(${pos}px)`;
+      tickerAnimationId = requestAnimationFrame(loop);
     }
-    inner.style.transform = `translateX(${pos}px)`;
+    // Reset
+    inner.style.transition = "none";
+    inner.style.transform = "translateX(0px)";
+    pos = 0;
     tickerAnimationId = requestAnimationFrame(loop);
-  }
-  // Reset
-  inner.style.transition = "none";
-  inner.style.transform = "translateX(0px)";
-  pos = 0;
-  tickerAnimationId = requestAnimationFrame(loop);
+  }, 0);
 }
 
 function updateStockInfo(symbol) {
   stockInfoBox.innerHTML = stockInfos[symbol] || "Keine Informationen zu diesem Unternehmen verfügbar.";
-  updateNewsTicker(symbol);
+  // updateNewsTicker(symbol); // wird jetzt direkt im EventListener aufgerufen
 }
 
 function populateStockSelect() {
@@ -601,7 +659,245 @@ function populateStockSelect() {
   updateStockInfo(stockSelect.value);
 }
 
-window.onload = () => {
+// --- Hilfsfunktionen für SHA512 und Base64/Hex ---
+async function sha512(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-512', data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function shortHash(str, len = 10) {
+  // Kürzerer Hash für User-ID
+  return sha512(str).then(h => h.slice(0, len));
+}
+function encodeBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+function decodeBase64(str) {
+  return decodeURIComponent(escape(atob(str)));
+}
+
+// --- User-ID generieren und speichern ---
+const USER_SALT = "STEIN0";
+async function getUserId() {
+  let id = localStorage.getItem("sim_userid_enc");
+  if (id) {
+    return decodeBase64(id);
+  }
+  // IP kann nicht direkt im Browser gelesen werden, daher Browserdaten + Zufallszahl + Zeit
+  const browserData = navigator.userAgent + navigator.language + screen.width + screen.height;
+  const rand = Math.random() + "" + Date.now();
+  const raw = browserData + rand;
+  const hash = await sha512(raw + USER_SALT);
+  const shortId = hash.slice(0, 12); // z.B. 12 Zeichen
+  localStorage.setItem("sim_userid_enc", encodeBase64(shortId));
+  return shortId;
+}
+
+// --- Verschlüsselte Balance speichern/lesen ---
+async function saveBalanceEncrypted(balance) {
+  const userId = await getUserId();
+  const data = `${userId}|${balance}`;
+  const enc = await sha512(data + USER_SALT);
+  localStorage.setItem("sim_balance_enc", encodeBase64(`${balance}|${enc}`));
+}
+async function loadBalanceEncrypted() {
+  const userId = await getUserId();
+  const val = localStorage.getItem("sim_balance_enc");
+  if (!val) return START_MONEY;
+  try {
+    const [balance, hash] = decodeBase64(val).split("|");
+    const check = await sha512(`${userId}|${balance}` + USER_SALT);
+    if (check === hash) return parseFloat(balance);
+    else return START_MONEY;
+  } catch {
+    return START_MONEY;
+  }
+}
+
+// --- Verschlüsselte Investments speichern/lesen ---
+async function saveInvestmentsEncrypted(investments) {
+  const userId = await getUserId();
+  const data = JSON.stringify(investments);
+  const enc = await sha512(data + userId + USER_SALT);
+  localStorage.setItem("sim_investments_enc", encodeBase64(`${data}|${enc}`));
+}
+async function loadInvestmentsEncrypted() {
+  const userId = await getUserId();
+  const val = localStorage.getItem("sim_investments_enc");
+  if (!val) return [];
+  try {
+    const [data, hash] = decodeBase64(val).split("|");
+    const check = await sha512(data + userId + USER_SALT);
+    if (check === hash) return JSON.parse(data);
+    else return [];
+  } catch {
+    return [];
+  }
+}
+
+// --- Überweisungen: eingelöste Codes speichern ---
+async function saveRedeemedTransfer(hash) {
+  let arr = JSON.parse(localStorage.getItem("sim_redeemed_transfers") || "[]");
+  arr.push(hash);
+  localStorage.setItem("sim_redeemed_transfers", JSON.stringify(arr));
+}
+function isTransferRedeemed(hash) {
+  let arr = JSON.parse(localStorage.getItem("sim_redeemed_transfers") || "[]");
+  return arr.includes(hash);
+}
+
+// --- Überweisungsmenü UI ---
+function createTransferMenu() {
+  if (document.getElementById("transfer-menu")) return;
+  const menu = document.createElement("div");
+  menu.id = "transfer-menu";
+  menu.style.position = "fixed";
+  menu.style.top = "50%";
+  menu.style.left = "50%";
+  menu.style.transform = "translate(-50%,-50%)";
+  menu.style.background = "#232b3b";
+  menu.style.padding = "28px 32px";
+  menu.style.borderRadius = "12px";
+  menu.style.boxShadow = "0 4px 32px #000b";
+  menu.style.zIndex = "10001";
+  menu.style.color = "#e0e6f0";
+  menu.innerHTML = `
+    <div style="font-size:1.1em;margin-bottom:10px;">
+      <b>Dein Code:</b> <span id="transfer-own-code" style="font-family:monospace;background:#1a2233;padding:2px 8px;border-radius:5px;"></span>
+    </div>
+    <div style="font-size:1.3em;margin-bottom:12px;">💸 Überweisung erstellen</div>
+    <div style="margin-bottom:8px;">Empfänger-Code:<br><input id="transfer-to" style="width:220px;font-size:1em;"></div>
+    <div style="margin-bottom:8px;">Betrag:<br><input id="transfer-amount" type="number" min="0.01" step="0.01" style="width:120px;font-size:1em;"></div>
+    <button id="transfer-generate-btn" style="margin-top:8px;">Überweisungscode generieren</button>
+    <div id="transfer-result" style="margin-top:14px;word-break:break-all;"></div>
+    <hr style="margin:18px 0 10px 0;">
+    <div style="font-size:1.1em;margin-bottom:8px;">💳 Überweisung einlösen</div>
+    <div style="margin-bottom:8px;">Code:<br><input id="transfer-redeem-code" style="width:320px;font-size:1em;"></div>
+    <button id="transfer-redeem-btn">Einlösen</button>
+    <div id="transfer-redeem-result" style="margin-top:12px;word-break:break-all;"></div>
+    <br>
+    <button id="transfer-close-btn" style="margin-top:10px;">Schließen</button>
+  `;
+  document.body.appendChild(menu);
+
+  // Eigenen Code anzeigen
+  getUserId().then(id => {
+    const el = document.getElementById("transfer-own-code");
+    if (el) el.textContent = id;
+  });
+
+  document.getElementById("transfer-close-btn").onclick = () => menu.remove();
+
+  document.getElementById("transfer-generate-btn").onclick = async function () {
+    const to = document.getElementById("transfer-to").value.trim();
+    const amount = parseFloat(document.getElementById("transfer-amount").value);
+    if (!to || isNaN(amount) || amount <= 0) {
+      document.getElementById("transfer-result").textContent = "Ungültige Eingabe.";
+      return;
+    }
+    const from = await getUserId();
+    if (from === to) {
+      document.getElementById("transfer-result").textContent = "Du kannst dir nicht selbst Geld schicken.";
+      return;
+    }
+    if (amount > balance) {
+      document.getElementById("transfer-result").textContent = "Nicht genug Guthaben.";
+      return;
+    }
+    // Zähler: wie oft wurde diese Überweisung schon gemacht?
+    let count = parseInt(localStorage.getItem("sim_transfer_count") || "0", 10) + 1;
+    localStorage.setItem("sim_transfer_count", count);
+    // Überweisungscode: from|to|amount|count|hash
+    const raw = `${from}|${to}|${amount}|${count}`;
+    const hash = await sha512(raw + USER_SALT);
+    const code = encodeBase64(`${raw}|${hash.slice(0, 16)}`); // Code ist kurz, Hash gekürzt
+    document.getElementById("transfer-result").textContent = "Überweisungscode: " + code;
+    // Guthaben abziehen und speichern
+    balance -= amount;
+    await saveBalanceEncrypted(balance);
+    updateBalance();
+  };
+
+  document.getElementById("transfer-redeem-btn").onclick = async function () {
+    const code = document.getElementById("transfer-redeem-code").value.trim();
+    if (!code) return;
+    let decoded;
+    try {
+      decoded = decodeBase64(code);
+    } catch {
+      document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code.";
+      return;
+    }
+    const parts = decoded.split("|");
+    if (parts.length !== 5) {
+      document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code.";
+      return;
+    }
+    const [from, to, amount, count, hash] = parts;
+    const myId = await getUserId();
+    if (to !== myId) {
+      document.getElementById("transfer-redeem-result").textContent = "Dieser Code ist nicht für dich bestimmt.";
+      return;
+    }
+    const raw = `${from}|${to}|${amount}|${count}`;
+    const checkHash = (await sha512(raw + USER_SALT)).slice(0, 16);
+    if (checkHash !== hash) {
+      document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code (Prüfsumme falsch).";
+      return;
+    }
+    // Doppelteinlösung verhindern
+    const redeemHash = await sha512(code + USER_SALT);
+    if (isTransferRedeemed(redeemHash)) {
+      document.getElementById("transfer-redeem-result").textContent = "Dieser Code wurde bereits eingelöst.";
+      return;
+    }
+    // Betrag gutschreiben
+    balance += parseFloat(amount);
+    await saveBalanceEncrypted(balance);
+    updateBalance();
+    await saveRedeemedTransfer(redeemHash);
+    document.getElementById("transfer-redeem-result").textContent = `Erfolg! Du hast ${parseFloat(amount).toFixed(2)} MONETEN erhalten.`;
+  };
+}
+
+// --- Button zum Öffnen des Überweisungsmenüs ---
+const transferBtn = document.createElement("button");
+transferBtn.textContent = "💸 Überweisen";
+transferBtn.style.position = "fixed";
+transferBtn.style.top = "18px";
+transferBtn.style.right = "18px";
+transferBtn.style.zIndex = "10000";
+transferBtn.style.background = "#1f8c43";
+transferBtn.style.color = "#fff";
+transferBtn.style.border = "none";
+transferBtn.style.borderRadius = "7px";
+transferBtn.style.padding = "8px 18px";
+transferBtn.style.fontSize = "1.1em";
+transferBtn.style.cursor = "pointer";
+transferBtn.onclick = createTransferMenu;
+document.body.appendChild(transferBtn);
+
+// --- updateBalance überschreiben ---
+async function updateBalance() {
+  balanceEl.textContent = `Verfügbar: ${balance.toFixed(2)} MONETEN`;
+  await saveBalanceEncrypted(balance);
+  updateStats();
+}
+
+// --- loadInvestments/saveInvestments überschreiben ---
+async function loadInvestments() {
+  investments = await loadInvestmentsEncrypted();
+  investmentList.innerHTML = "";
+  investments.forEach((inv, idx) => addInvestmentToList(inv, idx));
+  updateStats();
+}
+async function saveInvestments() {
+  await saveInvestmentsEncrypted(investments);
+}
+
+// --- Initialisierung anpassen ---
+window.onload = async () => {
   const stocks = [
     // Internationale Tech & Konsum
     "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA",
@@ -618,9 +914,9 @@ window.onload = () => {
     stockHistory[symbol] = generateStockHistory(symbol);
     stockHistory[symbol + "_ohlc"] = generateStockHistoryOHLC(symbol);
   });
-  balance = parseFloat(localStorage.getItem("sim_balance")) || START_MONEY;
-  updateBalance();
-  loadInvestments();
+  balance = await loadBalanceEncrypted();
+  await updateBalance();
+  await loadInvestments();
   populateStockSelect();
   updateStockInfo(stockSelect.value);
   setTimeout(() => renderChart(stockSelect.value), 100);
@@ -629,5 +925,5 @@ window.onload = () => {
   setupAutoRefresh();
   // Newsticker initialisieren
   tickerSpeed = parseInt(newsTickerSpeedInput.value, 10);
-  updateNewsTicker(stockSelect.value, true);
+  updateNewsTicker(stockSelect.value);
 };
