@@ -54,6 +54,13 @@ h1 {
   text-shadow: 0 2px 8px #1f8c4333;
 }
 
+p3 {
+  font-size: 7;
+  margin-bottom: 12px;
+  color: #bfc9db;
+  font-style: italic;
+}
+
 .balance-section, .investments, .chart-section {
   margin-bottom: 26px;
 }
