@@ -747,6 +747,52 @@ function isTransferRedeemed(hash) {
   return arr.includes(hash);
 }
 
+// --- Infofenster für Hinweise und Bestätigungen ---
+function showInfoDialog(message, options = {}) {
+  return new Promise(resolve => {
+    if (document.getElementById("info-dialog-overlay")) return resolve(false);
+    const overlay = document.createElement("div");
+    overlay.id = "info-dialog-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.left = "0";
+    overlay.style.top = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "rgba(20,24,40,0.93)";
+    overlay.style.zIndex = "99999";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+
+    const box = document.createElement("div");
+    box.style.background = "#232b3b";
+    box.style.borderRadius = "12px";
+    box.style.padding = "38px 44px";
+    box.style.boxShadow = "0 4px 32px #000b";
+    box.style.textAlign = "center";
+    box.style.color = "#e0e6f0";
+    box.style.fontSize = "1.15em";
+    box.innerHTML = `
+      <div style="margin-bottom:22px;">${message}</div>
+      <button id="info-dialog-ok" style="font-size:1.05em; padding:8px 28px; border-radius:7px; background:#1f8c43; color:#fff; border:none; cursor:pointer;">OK</button>
+      ${options.cancel ? `<button id="info-dialog-cancel" style="font-size:1.05em; margin-left:18px; padding:8px 28px; border-radius:7px; background:#444e6b; color:#fff; border:none; cursor:pointer;">Abbrechen</button>` : ""}
+    `;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    document.getElementById("info-dialog-ok").onclick = function () {
+      document.body.removeChild(overlay);
+      resolve(true);
+    };
+    if (options.cancel) {
+      document.getElementById("info-dialog-cancel").onclick = function () {
+        document.body.removeChild(overlay);
+        resolve(false);
+      };
+    }
+  });
+}
+
 // --- Überweisungsmenü UI ---
 function createTransferMenu() {
   if (document.getElementById("transfer-menu")) return;
@@ -768,7 +814,8 @@ function createTransferMenu() {
     </div>
     <div style="font-size:1.3em;margin-bottom:12px;">💸 Überweisung erstellen</div>
     <div style="margin-bottom:8px;">Empfänger-Code:<br><input id="transfer-to" style="width:220px;font-size:1em;"></div>
-    <div style="margin-bottom:8px;">Betrag:<br><input id="transfer-amount" type="number" min="0.01" step="0.01" style="width:120px;font-size:1em;"></div>
+    <div style="margin-bottom:8px;">Betrag (Brutto):<br><input id="transfer-amount" type="number" min="0.01" step="0.01" style="width:120px;font-size:1em;" placeholder="Bruttobetrag"></div>
+    <div style="margin-bottom:8px;">Hinweis: Von jeder Überweisung werden 2.5% als Steuer abgezogen.</div>
     <button id="transfer-generate-btn" style="margin-top:8px;">Überweisungscode generieren</button>
     <div id="transfer-result" style="margin-top:14px;word-break:break-all;"></div>
     <hr style="margin:18px 0 10px 0;">
@@ -801,19 +848,43 @@ function createTransferMenu() {
       document.getElementById("transfer-result").textContent = "Du kannst dir nicht selbst Geld schicken.";
       return;
     }
+    // Überweisungssteuer
+    const feePct = 2.5;
+    const fee = amount * (feePct / 100);
+    const netto = amount - fee;
+    // Überweisungsgrenzen prüfen (Brutto)
+    if (amount > balance * 0.9) {
+      await showInfoDialog("Du darfst maximal 90% deines aktuellen Guthabens auf einmal überweisen.<br>Bitte gib einen kleineren Betrag ein.");
+      return;
+    }
+    if (amount > balance * 0.5) {
+      const ok1 = await showInfoDialog(
+        `Du bist dabei, mehr als 50% deines Guthabens zu überweisen.<br>Bitte bestätige, dass du das wirklich möchtest.<br><br>Betrag (Brutto): ${amount.toFixed(2)} MONETEN<br>Überweisungssteuer: ${fee.toFixed(2)} MONETEN<br>Betrag, der beim Empfänger ankommt (Netto): ${netto.toFixed(2)} MONETEN`,
+        { cancel: true }
+      );
+      if (!ok1) return;
+      const ok2 = await showInfoDialog(
+        "Bist du dir wirklich ganz sicher?<br>Das ist mehr als die Hälfte deines Vermögens!",
+        { cancel: true }
+      );
+      if (!ok2) return;
+    }
     if (amount > balance) {
-      document.getElementById("transfer-result").textContent = "Nicht genug Guthaben.";
+      await showInfoDialog("Du hast nicht genug Guthaben für diesen Bruttobetrag.");
       return;
     }
     // Zähler: wie oft wurde diese Überweisung schon gemacht?
     let count = parseInt(localStorage.getItem("sim_transfer_count") || "0", 10) + 1;
     localStorage.setItem("sim_transfer_count", count);
-    // Überweisungscode: from|to|amount|count|hash
-    const raw = `${from}|${to}|${amount}|${count}`;
+    // Überweisungscode: from|to|netto|fee|brutto|count|hash
+    const raw = `${from}|${to}|${netto}|${fee}|${amount}|${count}`;
     const hash = await sha512(raw + USER_SALT);
-    const code = encodeBase64(`${raw}|${hash.slice(0, 16)}`); // Code ist kurz, Hash gekürzt
-    document.getElementById("transfer-result").textContent = "Überweisungscode: " + code;
-    // Guthaben abziehen und speichern
+    const code = encodeBase64(`${raw}|${hash.slice(0, 16)}`);
+    document.getElementById("transfer-result").innerHTML =
+      `Überweisungscode: <b>${code}</b><br>
+      <span style="color:#e0b43a;">Hinweis: Von ${amount.toFixed(2)} MONETEN werden ${fee.toFixed(2)} MONETEN (${feePct}%) als Steuer abgezogen.<br>
+      Der Empfänger erhält <b>${netto.toFixed(2)} MONETEN</b>.</span>`;
+    // Guthaben abziehen und speichern (Brutto)
     balance -= amount;
     await saveBalanceEncrypted(balance);
     updateBalance();
@@ -830,17 +901,17 @@ function createTransferMenu() {
       return;
     }
     const parts = decoded.split("|");
-    if (parts.length !== 5) {
+    if (parts.length !== 7) {
       document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code.";
       return;
     }
-    const [from, to, amount, count, hash] = parts;
+    const [from, to, netto, fee, brutto, count, hash] = parts;
     const myId = await getUserId();
     if (to !== myId) {
       document.getElementById("transfer-redeem-result").textContent = "Dieser Code ist nicht für dich bestimmt.";
       return;
     }
-    const raw = `${from}|${to}|${amount}|${count}`;
+    const raw = `${from}|${to}|${netto}|${fee}|${brutto}|${count}`;
     const checkHash = (await sha512(raw + USER_SALT)).slice(0, 16);
     if (checkHash !== hash) {
       document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code (Prüfsumme falsch).";
@@ -852,12 +923,14 @@ function createTransferMenu() {
       document.getElementById("transfer-redeem-result").textContent = "Dieser Code wurde bereits eingelöst.";
       return;
     }
-    // Betrag gutschreiben
-    balance += parseFloat(amount);
+    // Betrag gutschreiben (nur Netto)
+    balance += parseFloat(netto);
     await saveBalanceEncrypted(balance);
     updateBalance();
     await saveRedeemedTransfer(redeemHash);
-    document.getElementById("transfer-redeem-result").textContent = `Erfolg! Du hast ${parseFloat(amount).toFixed(2)} MONETEN erhalten.`;
+    document.getElementById("transfer-redeem-result").innerHTML =
+      `Erfolg! Du hast <b>${parseFloat(netto).toFixed(2)} MONETEN</b> erhalten.<br>
+      <span style="color:#e0b43a;">Hinweis: Der Sender hat ${parseFloat(brutto).toFixed(2)} MONETEN überwiesen, davon wurden ${parseFloat(fee).toFixed(2)} MONETEN als Steuer abgezogen.</span>`;
   };
 }
 
@@ -877,24 +950,6 @@ transferBtn.style.fontSize = "1.1em";
 transferBtn.style.cursor = "pointer";
 transferBtn.onclick = createTransferMenu;
 document.body.appendChild(transferBtn);
-
-// --- updateBalance überschreiben ---
-async function updateBalance() {
-  balanceEl.textContent = `Verfügbar: ${balance.toFixed(2)} MONETEN`;
-  await saveBalanceEncrypted(balance);
-  updateStats();
-}
-
-// --- loadInvestments/saveInvestments überschreiben ---
-async function loadInvestments() {
-  investments = await loadInvestmentsEncrypted();
-  investmentList.innerHTML = "";
-  investments.forEach((inv, idx) => addInvestmentToList(inv, idx));
-  updateStats();
-}
-async function saveInvestments() {
-  await saveInvestmentsEncrypted(investments);
-}
 
 // --- Initialisierung anpassen ---
 window.onload = async () => {
