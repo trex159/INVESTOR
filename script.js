@@ -103,6 +103,57 @@ const stockInfos = {
   "RHM.DE": "Rheinmetall AG ist ein deutscher Rüstungskonzern (Waffenindustrie). <span style='color:red;font-weight:bold;'>Es ist asozial, in Waffenindustrie zu investieren.</span>"
 };
 
+// Abzeichen-Definitionen für Unternehmen
+const stockBadges = {
+  "AAPL": ["Ökologisch", "Sozial", "Ethisch"],
+  "MSFT": ["Ökologisch", "Sozial", "Ethisch"],
+  "GOOGL": ["Ökologisch", "Sozial", "Ethisch"],
+  "AMZN": ["Sozial"],
+  "TSLA": ["Ökologisch", "Sozial"],
+  "META": ["Sozial"],
+  "NVDA": ["Sozial", "Ethisch"],
+  "SAP": ["Sozial", "Ethisch"],
+  "BMW.DE": ["Ökologisch", "Sozial"],
+  "SIE.DE": ["Ökologisch", "Sozial", "Ethisch"],
+  "BAS.DE": ["Ökologisch", "Sozial"],
+  "VOW3.DE": ["Sozial"],
+  "DTE.DE": ["Sozial", "Ethisch"],
+  "DBK.DE": ["Ethisch"],
+  "ADS.DE": ["Sozial", "Ethisch"],
+  "ALV.DE": ["Sozial", "Ethisch"],
+  "RWE.DE": ["Ökologisch", "Sozial"],
+  "FRE.DE": ["Sozial", "Ethisch"],
+  "MUV2.DE": ["Sozial", "Ethisch"],
+  "AIR.PA": ["Sozial"],
+  "OR.PA": ["Ökologisch", "Sozial", "Ethisch"],
+  "MC.PA": ["Sozial", "Ethisch"],
+  "CSCO": ["Sozial", "Ethisch"],
+  "INTC": ["Ökologisch", "Sozial", "Ethisch"],
+  "NFLX": ["Sozial", "Ethisch"],
+  "DIS": ["Sozial", "Ethisch"],
+  "JNJ": ["Sozial", "Ethisch"],
+  "PFE": ["Sozial", "Ethisch"],
+  "KO": ["Sozial"],
+  "NKE": ["Sozial"],
+  "ABI.BR": ["Sozial"],
+  "HEIA.AS": ["Sozial", "Ethisch"],
+  "CARL-B.CO": ["Sozial"],
+  "BUD": ["Sozial"],
+  "SAM": ["Sozial", "Ethisch"],
+  "DGE.L": ["Sozial", "Ethisch"],
+  "RHM.DE": [] // Keine Abzeichen (Waffenindustrie)
+};
+
+// Hilfsfunktion: Badges als HTML (SVG aus data/-Ordner)
+function getBadgeHTML(badges) {
+  const badgeMap = {
+    "Ökologisch": `<img src="data/oeko.icon.svg" alt="Ökologisch" title="Ökologisch: Umweltschutz, Klimaschutz, Erneuerbare Energien, Emissionsreduktion, schonender Einsatz von Rohstoffen" style="height:1.25em;width:1.25em;vertical-align:middle;margin-right:2px;">`,
+    "Sozial": `<img src="data/sozial.icon.svg" alt="Sozial" title="Sozial: Arbeitssicherheit, Gesundheitsschutz, Arbeitsrechte, Verbot von Kinder-/Zwangsarbeit, faire Löhne" style="height:1.25em;width:1.25em;vertical-align:middle;margin-right:2px;">`,
+    "Ethisch": `<img src="data/ethisch.icon.svg" alt="Ethisch" title="Ethisch: Korruptionsbekämpfung, keine Waffen, Whistleblower, Unternehmensethik, Compliance" style="height:1.25em;width:1.25em;vertical-align:middle;margin-right:2px;">`
+  };
+  return badges.map(b => badgeMap[b] || "").join("");
+}
+
 let chart;
 let autoRefresh = true;
 let autoRefreshInterval = null;
@@ -646,6 +697,11 @@ function startTickerLoop(inner, span1, span2, span3) {
 function updateStockInfo(symbol) {
   stockInfoBox.innerHTML = stockInfos[symbol] || "Keine Informationen zu diesem Unternehmen verfügbar.";
   // updateNewsTicker(symbol); // wird jetzt direkt im EventListener aufgerufen
+  // Abzeichen unterhalb der Beschreibung anzeigen
+  const badges = stockBadges[symbol] || [];
+  if (badges.length > 0) {
+    stockInfoBox.innerHTML += `<div style="margin-top:8px;">Abzeichen: ${getBadgeHTML(badges)}</div>`;
+  }
 }
 
 function populateStockSelect() {
@@ -653,10 +709,32 @@ function populateStockSelect() {
   Object.keys(stockNames).forEach(symbol => {
     const opt = document.createElement("option");
     opt.value = symbol;
+    // KEIN Badge-HTML im Option-Text (wird von Browsern nicht unterstützt)
     opt.textContent = `${symbol} – ${stockNames[symbol]}`;
     stockSelect.appendChild(opt);
   });
   updateStockInfo(stockSelect.value);
+
+  // Abzeichen-Legende in die allgemeine Legende einfügen (nur einmal)
+  const legendDiv = document.getElementById("investment-legend");
+  if (legendDiv && !legendDiv.querySelector(".badge-legend")) {
+    const badgeLegend = document.createElement("span");
+    badgeLegend.className = "badge-legend";
+    badgeLegend.style.marginLeft = "18px";
+    badgeLegend.innerHTML = `
+      <img src="data/oeko.icon.svg" alt="Ökologisch" style="height:1.15em;width:1.15em;vertical-align:middle;margin-right:3px;">
+      <span style="color:#3ecf4a;">Ökologisch</span>
+      <span style="margin-left:14px;">
+        <img src="data/sozial.icon.svg" alt="Sozial" style="height:1.15em;width:1.15em;vertical-align:middle;margin-right:3px;">
+        <span style="color:#ffe066;">Sozial</span>
+      </span>
+      <span style="margin-left:14px;">
+        <img src="data/ethisch.icon.svg" alt="Ethisch" style="height:1.15em;width:1.15em;vertical-align:middle;margin-right:3px;">
+        <span style="color:#3ca3e8;">Ethisch</span>
+      </span>
+    `;
+    legendDiv.appendChild(badgeLegend);
+  }
 }
 
 // --- Hilfsfunktionen für SHA512 und Base64/Hex ---
