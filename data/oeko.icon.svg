@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="300"
+   height="300"
+   viewBox="0 0 79.374998 79.375"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="oeko.icon,svg.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.5233586"
+     inkscape:cx="128.00663"
+     inkscape:cy="145.4024"
+     inkscape:window-width="1920"
+     inkscape:window-height="1111"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="path1"
+       style="fill:#00ff00;stroke:none;stroke-width:1.1"
+       d="m 39.128518,6.5598495 c -8.555399,-1.36e-5 -18.929474,0.6765794 -24.79273,6.0165995 -6.6271507,6.035744 -8.2073385,17.313415 -8.2073229,26.983454 -1.46e-5,9.268891 2.0541402,22.805836 8.2073229,28.80017 5.945832,5.792337 15.836183,4.199896 24.79273,4.199882 9.143708,1.5e-5 20.10821,1.807794 26.084791,-4.199882 5.936071,-5.966954 6.915276,-19.71844 6.915262,-28.80017 1.5e-5,-9.51859 -0.468404,-20.960545 -6.915262,-26.983454 C 59.316237,7.0671711 47.835366,6.5598355 39.128518,6.5598495 Z M 51.415107,18.349828 57.80128,23.139716 29.579747,60.769977 20.45524,47.464846 v -11.18433 l 9.124507,11.18433 z"
+       sodipodi:nodetypes="cscscscscccccccc" />
+  </g>
+</svg>
