@@ -1012,22 +1012,126 @@ function createTransferMenu() {
   };
 }
 
+// --- Button zum Öffnen des Erfolgsmenüs ---
+const successBtn = document.createElement("button");
+successBtn.textContent = "Erfolge";
+successBtn.id = "success-btn";
+successBtn.onclick = showSuccessMenu;
+
 // --- Button zum Öffnen des Überweisungsmenüs ---
 const transferBtn = document.createElement("button");
-transferBtn.textContent = "💸 Überweisen";
-transferBtn.style.position = "fixed";
-transferBtn.style.top = "18px";
-transferBtn.style.right = "18px";
-transferBtn.style.zIndex = "10000";
-transferBtn.style.background = "#1f8c43";
-transferBtn.style.color = "#fff";
-transferBtn.style.border = "none";
-transferBtn.style.borderRadius = "7px";
-transferBtn.style.padding = "8px 18px";
-transferBtn.style.fontSize = "1.1em";
-transferBtn.style.cursor = "pointer";
+transferBtn.textContent = "Überweisen";
+transferBtn.id = "transfer-btn";
 transferBtn.onclick = createTransferMenu;
-document.body.appendChild(transferBtn);
+
+// Füge beide Buttons in die Button-Leiste ein (zwischen "sell-btn" und "collect-btn")
+const sellBtnParent = sellBtn.parentNode;
+sellBtnParent.insertBefore(transferBtn, collectBtn);
+sellBtnParent.insertBefore(successBtn, collectBtn);
+
+// Style wie die anderen Buttons (entferne alle individuellen Styles)
+transferBtn.removeAttribute("style");
+successBtn.removeAttribute("style");
+
+// --- Levelsystem: Levelgrenzen (unregelmäßig, von -10 bis 159) ---
+const LEVEL_THRESHOLDS = [
+  -5000, -4000, -3000, -2000, -1500, -1000, -700, -400, -200, -100, // Level -10 bis -1
+  0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 3800, // 0-9
+  4700, 5700, 6800, 8000, 9300, 10700, 12200, 13800, 15500, 17300, // 10-19
+  19200, 21200, 23300, 25500, 27800, 30200, 32700, 35300, 38000, 40800, // 20-29
+  43700, 46700, 49800, 53000, 56300, 59700, 63200, 66800, 70500, 74300, // 30-39
+  78200, 82200, 86300, 90500, 94800, 99200, 103700, 108300, 113000, 117800, // 40-49
+  122700, 127700, 132800, 138000, 143300, 148700, 154200, 159800, 165500, 171300, // 50-59
+  177200, 183200, 189300, 195500, 201800, 208200, 214700, 221300, 228000, 234800, // 60-69
+  241700, 248700, 255800, 263000, 270300, 277700, 285200, 292800, 300500, 308300, // 70-79
+  316200, 324200, 332300, 340500, 348800, 357200, 365700, 374300, 383000, 391800, // 80-89
+  400700, 409700, 418800, 428000, 437300, 446700, 456200, 465800, 475500, 485300, // 90-99
+  495200, 505200, 515300, 525500, 535800, 546200, 556700, 567300, 578000, 588800, // 100-109
+  599700, 610700, 621800, 633000, 644300, 655700, 667200, 678800, 690500, 702300, // 110-119
+  714200, 726200, 738300, 750500, 762800, 775200, 787700, 800300, 813000, 825800, // 120-129
+  838700, 851700, 864800, 878000, 891300, 904700, 918200, 931800, 945500, 959300, // 130-139
+  973200, 987200, 995000 // 140-159 (letztes Level: 995000+)
+];
+
+// --- Erfahrung & Level berechnen ---
+function getExperience() {
+  const totalInvested = investments.reduce((sum, inv) => sum + inv.amount, 0);
+  return balance + totalInvested - 5000;
+}
+function getLevel(exp) {
+  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (exp >= LEVEL_THRESHOLDS[i]) return i - 10; // Level -10 beginnt bei Index 0
+  }
+  return -10;
+}
+function getLevelProgress(exp) {
+  const lvl = getLevel(exp);
+  const idx = lvl + 10;
+  const min = LEVEL_THRESHOLDS[idx] ?? LEVEL_THRESHOLDS[0];
+  const max = LEVEL_THRESHOLDS[idx + 1] ?? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
+  const progress = Math.max(0, Math.min(1, (exp - min) / (max - min)));
+  return { lvl, min, max, progress };
+}
+
+// --- Erfolgsmenü Overlay ---
+function showSuccessMenu() {
+  // Overlay
+  if (document.getElementById("success-menu-overlay")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "success-menu-overlay";
+  overlay.style.position = "fixed";
+  overlay.style.left = "0";
+  overlay.style.top = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.background = "rgba(20,24,40,0.93)";
+  overlay.style.zIndex = "10001";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.overflow = "auto";
+
+  // Box
+  const box = document.createElement("div");
+  box.style.background = "#232b3b";
+  box.style.borderRadius = "14px";
+  box.style.padding = "38px 44px";
+  box.style.boxShadow = "0 4px 32px #000b";
+  box.style.textAlign = "center";
+  box.style.color = "#e0e6f0";
+  box.style.fontSize = "1.18em";
+  box.style.maxWidth = "95vw";
+  box.style.maxHeight = "95vh";
+  box.style.overflow = "auto";
+
+  const exp = getExperience();
+  const { lvl, min, max, progress } = getLevelProgress(exp);
+
+  box.innerHTML = `
+    <div style="font-size:2em;margin-bottom:18px;">🏆 Erfolg & Level</div>
+    <div style="margin-bottom:12px;">
+      <b>Level:</b> <span style="font-size:1.5em;color:#ffe066;">${lvl}</span>
+    </div>
+    <div style="margin-bottom:12px;">
+      <b>Erfahrung:</b> ${exp.toFixed(2)} / ${max} <span style="color:#bfc9db;">(nächstes Level)</span>
+    </div>
+    <div style="margin-bottom:18px;">
+      <div style="background:#1a2233;border-radius:8px;height:28px;width:340px;max-width:90vw;display:inline-block;overflow:hidden;">
+        <div style="background:#3ecf4a;height:100%;width:${(progress * 100).toFixed(1)}%;transition:width 0.5s;"></div>
+      </div>
+      <div style="font-size:0.98em;margin-top:4px;color:#bfc9db;">
+        Noch ${(max - exp).toFixed(2)} Erfahrung bis Level ${lvl + 1}
+      </div>
+    </div>
+    <button id="success-menu-close-btn" style="font-size:1.05em; padding:8px 28px; border-radius:7px; background:#1f8c43; color:#fff; border:none; cursor:pointer;">Schließen</button>
+  `;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  document.getElementById("success-menu-close-btn").onclick = function () {
+    document.body.removeChild(overlay);
+  };
+}
 
 // --- Initialisierung anpassen ---
 window.onload = async () => {
