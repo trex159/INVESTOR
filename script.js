@@ -141,7 +141,7 @@ const stockBadges = {
   "BUD": ["Sozial"],
   "SAM": ["Sozial", "Ethisch"],
   "DGE.L": ["Sozial", "Ethisch"],
-  "RHM.DE": [] // Keine Abzeichen (Waffenindustrie)
+  "RHM.DE": ["Sozial"]
 };
 
 // Hilfsfunktion: Badges als HTML (SVG aus data/-Ordner)
