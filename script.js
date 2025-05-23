@@ -886,13 +886,14 @@ function createTransferMenu() {
   menu.style.boxShadow = "0 4px 32px #000b";
   menu.style.zIndex = "10001";
   menu.style.color = "#e0e6f0";
+  menu.style.fontFamily = "'IBM Plex Sans', Arial, sans-serif"; // <-- Schriftart für das Menü
   menu.innerHTML = `
     <div style="font-size:1.1em;margin-bottom:10px;">
-      <b>Dein Code:</b> <span id="transfer-own-code" style="font-family:monospace;background:#1a2233;padding:2px 8px;border-radius:5px;"></span>
+      <b>Dein Code:</b> <span id="transfer-own-code" style="font-family:'IBM Plex Sans', 'Consolas', 'Menlo', monospace;background:#1a2233;padding:2px 8px;border-radius:5px;"></span>
     </div>
     <div style="font-size:1.3em;margin-bottom:12px;">💸 Überweisung erstellen</div>
     <div style="margin-bottom:8px;">Empfänger-Code:<br><input id="transfer-to" style="width:220px;font-size:1em;"></div>
-    <div style="margin-bottom:8px;">Betrag (Brutto):<br><input id="transfer-amount" type="number" min="0.01" step="0.01" style="width:120px;font-size:1em;" placeholder="Bruttobetrag"></div>
+    <div style="margin-bottom:8px;">Betrag (Brutto):<br><input id="transfer-amount" type="number" min="0.01" step="0.01" style="width:120px;font-size:1em;" placeholder="Brutto"></div>
     <div style="margin-bottom:8px;">Hinweis: Von jeder Überweisung werden 2.5% als Steuer abgezogen.</div>
     <button id="transfer-generate-btn" style="margin-top:8px;">Überweisungscode generieren</button>
     <div id="transfer-result" style="margin-top:14px;word-break:break-all;"></div>
@@ -966,6 +967,8 @@ function createTransferMenu() {
     balance -= amount;
     await saveBalanceEncrypted(balance);
     updateBalance();
+    // --- Sende-Summe erhöhen ---
+    addTransferSentSum(amount);
   };
 
   document.getElementById("transfer-redeem-btn").onclick = async function () {
@@ -1001,13 +1004,80 @@ function createTransferMenu() {
       document.getElementById("transfer-redeem-result").textContent = "Dieser Code wurde bereits eingelöst.";
       return;
     }
+
+    // --- Empfangsgrenze prüfen ---
+    const receivedSum = getTransferReceivedSum();
+    const sentSum = getTransferSentSum();
+    const maxDiff = 5000;
+    const diff = receivedSum - sentSum;
+    const nettoNum = parseFloat(netto);
+    let okBetrag = maxDiff - diff;
+    if (okBetrag < 0) okBetrag = 0;
+    if (diff >= maxDiff || nettoNum > okBetrag) {
+      // Zeige Dialog mit Info und Buttons
+      const infoMsg = `
+        Um eine Unendliche Geldquelle zu vermeiden, darfst du maximal 5000 MONETEN durch Überweisung empfangen haben, diese Zahl kannst du aber senken indem du selbst Geld an andere sendest.<br>
+        Der Absender wollte dir <b>${nettoNum.toFixed(2)} MONETEN</b> senden, du hast aber schon so viel empfangen, dass du nur noch <b>${okBetrag.toFixed(2)} MONETEN</b> erhalten wirst, der Rest würde verfallen.<br><br>
+        Möchtest du trotzdem einlösen?
+      `;
+      // Custom Dialog mit zwei Buttons
+      const overlay = document.createElement("div");
+      overlay.id = "transfer-limit-dialog";
+      overlay.style.position = "fixed";
+      overlay.style.left = "0";
+      overlay.style.top = "0";
+      overlay.style.width = "100vw";
+      overlay.style.height = "100vh";
+      overlay.style.background = "rgba(20,24,40,0.93)";
+      overlay.style.zIndex = "10002";
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      const box = document.createElement("div");
+      box.style.background = "#232b3b";
+      box.style.borderRadius = "12px";
+      box.style.padding = "38px 44px";
+      box.style.boxShadow = "0 4px 32px #000b";
+      box.style.textAlign = "center";
+      box.style.color = "#e0e6f0";
+      box.style.fontSize = "1.15em";
+      box.innerHTML = `
+        <div style="margin-bottom:22px;">${infoMsg}</div>
+        <button id="transfer-limit-ok" style="font-size:1.05em; padding:8px 28px; border-radius:7px; background:#1f8c43; color:#fff; border:none; cursor:pointer;">Trotzdem einlösen</button>
+        <button id="transfer-limit-cancel" style="font-size:1.05em; margin-left:18px; padding:8px 28px; border-radius:7px; background:#444e6b; color:#fff; border:none; cursor:pointer;">Später einlösen</button>
+      `;
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      document.getElementById("transfer-limit-ok").onclick = async function () {
+        document.body.removeChild(overlay);
+        // Nur okBetrag gutschreiben, Rest verfällt
+        if (okBetrag > 0) {
+          balance += okBetrag;
+          await saveBalanceEncrypted(balance);
+          updateBalance();
+          addTransferReceivedSum(okBetrag);
+        }
+        await saveRedeemedTransfer(redeemHash);
+        document.getElementById("transfer-redeem-result").innerHTML =
+          `Erfolg! Du hast <b>${okBetrag.toFixed(2)} MONETEN</b> erhalten.<br>
+          <span style="color:#e0b43a;">Hinweis: Der Sender hat ${parseFloat(brutto).toFixed(2)} MONETEN überwiesen, davon wurden ${parseFloat(fee).toFixed(2)} MONETEN als Steuer abgezogen.<br>
+          Wegen der Empfangsgrenze hast du nur ${okBetrag.toFixed(2)} MONETEN erhalten.</span>`;
+      };
+      document.getElementById("transfer-limit-cancel").onclick = function () {
+        document.body.removeChild(overlay);
+      };
+      return;
+    }
+
     // Betrag gutschreiben (nur Netto)
-    balance += parseFloat(netto);
+    balance += nettoNum;
     await saveBalanceEncrypted(balance);
     updateBalance();
+    addTransferReceivedSum(nettoNum);
     await saveRedeemedTransfer(redeemHash);
     document.getElementById("transfer-redeem-result").innerHTML =
-      `Erfolg! Du hast <b>${parseFloat(netto).toFixed(2)} MONETEN</b> erhalten.<br>
+      `Erfolg! Du hast <b>${nettoNum.toFixed(2)} MONETEN</b> erhalten.<br>
       <span style="color:#e0b43a;">Hinweis: Der Sender hat ${parseFloat(brutto).toFixed(2)} MONETEN überwiesen, davon wurden ${parseFloat(fee).toFixed(2)} MONETEN als Steuer abgezogen.</span>`;
   };
 }
@@ -1164,3 +1234,23 @@ window.onload = async () => {
   tickerSpeed = parseInt(newsTickerSpeedInput.value, 10);
   updateNewsTicker(stockSelect.value);
 };
+
+// --- Hilfsfunktionen für Überweisungssummen im LocalStorage ---
+function getTransferReceivedSum() {
+  return parseFloat(localStorage.getItem("sim_transfer_received_sum") || "0");
+}
+function setTransferReceivedSum(sum) {
+  localStorage.setItem("sim_transfer_received_sum", sum.toFixed(2));
+}
+function addTransferReceivedSum(amount) {
+  setTransferReceivedSum(getTransferReceivedSum() + amount);
+}
+function getTransferSentSum() {
+  return parseFloat(localStorage.getItem("sim_transfer_sent_sum") || "0");
+}
+function setTransferSentSum(sum) {
+  localStorage.setItem("sim_transfer_sent_sum", sum.toFixed(2));
+}
+function addTransferSentSum(amount) {
+  setTransferSentSum(getTransferSentSum() + amount);
+}
