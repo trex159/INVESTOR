@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="300"
+   height="300"
+   viewBox="0 0 79.374998 79.375"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="MONETEN.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="2.1543544"
+     inkscape:cx="193.56147"
+     inkscape:cy="164.08628"
+     inkscape:window-width="1920"
+     inkscape:window-height="1111"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <circle
+       style="fill:#fff311;fill-opacity:1;stroke:#363636;stroke-width:0.999194;stroke-opacity:1"
+       id="path873"
+       cx="40.356857"
+       cy="39.865993"
+       r="36.050434" />
+    <path
+       d="M 20.049125,16.250863 V 32.80966 h -5.55459 l 2.541933,3.528327 h 3.012657 v 3.528001 h -5.55459 l 2.541933,3.527999 h 3.012657 v 10.987476 l 3.259341,5.571321 V 43.393987 h 7.834421 l 9.428992,16.558797 8.208051,-16.558797 h 6.819486 v 10.987476 l 3.726459,5.571321 V 43.393987 h 5.55459 l -2.393332,-3.527999 h -3.161258 v -3.528001 h 5.55459 L 62.487133,32.80966 H 59.325875 V 16.250863 L 49.372686,32.80966 H 30.940818 Z m 3.259341,13.385075 1.807136,3.173722 h -1.807136 z m 32.29095,0 v 3.173722 h -1.57325 z m -32.29095,6.702049 h 3.816338 l 2.008879,3.528001 h -5.825217 z m 9.953188,0 h 13.990295 l -2.120407,3.528001 h -9.549379 z m 19.015767,0 h 3.321995 v 3.528001 h -5.07074 z m -14.37475,7.056 h 5.108134 l -2.438926,4.057773 z"
+       style="font-size:19.05px;font-family:'Malgun Gothic';-inkscape-font-specification:'Malgun Gothic';fill:#000000;stroke-width:3.24275"
+       id="path3" />
+  </g>
+</svg>
