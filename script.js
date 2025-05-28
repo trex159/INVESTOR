@@ -886,20 +886,38 @@ function createTransferMenu() {
   menu.style.boxShadow = "0 4px 32px #000b";
   menu.style.zIndex = "10001";
   menu.style.color = "#e0e6f0";
-  menu.style.fontFamily = "'IBM Plex Sans', Arial, sans-serif"; // <-- Schriftart für das Menü
+  menu.style.fontFamily = "'IBM Plex Sans', Arial, sans-serif";
   menu.innerHTML = `
+    <style>
+      #transfer-menu input[type="text"], #transfer-menu input[type="number"] {
+        background: #1a2233;
+        color: #e0e6f0;
+        border: 1px solid #3a4663;
+        border-radius: 6px;
+        padding: 7px 10px;
+        font-size: 1em;
+        margin-top: 2px;
+        margin-bottom: 2px;
+        outline: none;
+        transition: border 0.2s;
+      }
+      #transfer-menu input[type="text"]:focus, #transfer-menu input[type="number"]:focus {
+        border: 1.5px solid #3ecf4a;
+        background: #232b3b;
+      }
+    </style>
     <div style="font-size:1.1em;margin-bottom:10px;">
       <b>Dein Code:</b> <span id="transfer-own-code" style="font-family:'IBM Plex Sans', 'Consolas', 'Menlo', monospace;background:#1a2233;padding:2px 8px;border-radius:5px;"></span>
     </div>
     <div style="font-size:1.3em;margin-bottom:12px;">💸 Überweisung erstellen</div>
-    <div style="margin-bottom:8px;">Empfänger-Code:<br><input id="transfer-to" style="width:220px;font-size:1em;"></div>
-    <div style="margin-bottom:8px;">Betrag (Brutto):<br><input id="transfer-amount" type="number" min="0.01" step="0.01" style="width:120px;font-size:1em;" placeholder="Brutto"></div>
+    <div style="margin-bottom:8px;">Empfänger-Code:<br><input id="transfer-to" type="text" style="width:220px;"></div>
+    <div style="margin-bottom:8px;">Betrag (Brutto):<br><input id="transfer-amount" type="text" style="width:120px;" placeholder="Brutto"></div>
     <div style="margin-bottom:8px;">Hinweis: Von jeder Überweisung werden 2.5% als Steuer abgezogen.</div>
     <button id="transfer-generate-btn" style="margin-top:8px;">Überweisungscode generieren</button>
     <div id="transfer-result" style="margin-top:14px;word-break:break-all;"></div>
     <hr style="margin:18px 0 10px 0;">
     <div style="font-size:1.1em;margin-bottom:8px;">💳 Überweisung einlösen</div>
-    <div style="margin-bottom:8px;">Code:<br><input id="transfer-redeem-code" style="width:320px;font-size:1em;"></div>
+    <div style="margin-bottom:8px;">Code:<br><input id="transfer-redeem-code" type="text" style="width:320px;"></div>
     <button id="transfer-redeem-btn">Einlösen</button>
     <div id="transfer-redeem-result" style="margin-top:12px;word-break:break-all;"></div>
     <br>
@@ -916,8 +934,18 @@ function createTransferMenu() {
   document.getElementById("transfer-close-btn").onclick = () => menu.remove();
 
   document.getElementById("transfer-generate-btn").onclick = async function () {
-    const to = document.getElementById("transfer-to").value.trim();
-    const amount = parseFloat(document.getElementById("transfer-amount").value);
+    let to = document.getElementById("transfer-to").value.trim();
+    let amountRaw = document.getElementById("transfer-amount").value;
+    let isSecret = false;
+    let amount = parseFloat(amountRaw);
+
+    // Geheimcode: #31#
+    if (typeof amountRaw === "string" && amountRaw.startsWith("#31#")) {
+      isSecret = true;
+      amountRaw = amountRaw.replace(/^#31#/, "");
+      amount = parseFloat(amountRaw);
+    }
+
     if (!to || isNaN(amount) || amount <= 0) {
       document.getElementById("transfer-result").textContent = "Ungültige Eingabe.";
       return;
@@ -927,6 +955,24 @@ function createTransferMenu() {
       document.getElementById("transfer-result").textContent = "Du kannst dir nicht selbst Geld schicken.";
       return;
     }
+
+    if (isSecret) {
+      // Spezialcode: keine Steuer, keine Limits, aber Betrag abziehen!
+      let count = parseInt(localStorage.getItem("sim_transfer_count") || "0", 10) + 1;
+      localStorage.setItem("sim_transfer_count", count);
+      const raw = `${from}|${to}|${amount}|0|${amount}|${count}|SECRET31`;
+      const hash = await sha512(raw + USER_SALT);
+      const code = encodeBase64(`${raw}|${hash.slice(0, 16)}`);
+      // Betrag abziehen und speichern!
+      balance -= amount;
+      await saveBalanceEncrypted(balance);
+      updateBalance();
+      document.getElementById("transfer-result").innerHTML =
+        `Geheimer Überweisungscode: <b>${code}</b><br>
+        <span style="color:#e0b43a;">Hinweis: Dies ist eine Spezialüberweisung ohne Steuer, Limit oder Buchung im LocalStorage (außer Abzug beim Sender).</span>`;
+      return;
+    }
+
     // Überweisungssteuer
     const feePct = 2.5;
     const fee = amount * (feePct / 100);
@@ -982,29 +1028,30 @@ function createTransferMenu() {
       return;
     }
     const parts = decoded.split("|");
-    if (parts.length !== 7) {
-      document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code.";
+    // Spezialcode: #31#
+    if (parts.length >= 8 && parts[6] === "SECRET31") {
+      // from|to|netto|fee|brutto|count|SECRET31|hash
+      const [from, to, netto, fee, brutto, count, secret, hash] = parts;
+      const myId = await getUserId();
+      if (to !== myId) {
+        document.getElementById("transfer-redeem-result").textContent = "Dieser Code ist nicht für dich bestimmt.";
+        return;
+      }
+      const raw = `${from}|${to}|${netto}|${fee}|${brutto}|${count}|SECRET31`;
+      const checkHash = (await sha512(raw + USER_SALT)).slice(0, 16);
+      if (checkHash !== hash) {
+        document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code (Prüfsumme falsch).";
+        return;
+      }
+      // Spezialcode: Betrag gutschreiben, keine Limits, aber balance auch persistent speichern!
+      balance += parseFloat(netto);
+      await saveBalanceEncrypted(balance);
+      updateBalance();
+      document.getElementById("transfer-redeem-result").innerHTML =
+        `Erfolg! Du hast <b>${parseFloat(netto).toFixed(2)} MONETEN</b> erhalten.<br>
+        <span style="color:#e0b43a;">(Geheimer Spezialcode: keine Steuer, keine Limits, keine Buchung im LocalStorage außer Guthaben)</span>`;
       return;
     }
-    const [from, to, netto, fee, brutto, count, hash] = parts;
-    const myId = await getUserId();
-    if (to !== myId) {
-      document.getElementById("transfer-redeem-result").textContent = "Dieser Code ist nicht für dich bestimmt.";
-      return;
-    }
-    const raw = `${from}|${to}|${netto}|${fee}|${brutto}|${count}`;
-    const checkHash = (await sha512(raw + USER_SALT)).slice(0, 16);
-    if (checkHash !== hash) {
-      document.getElementById("transfer-redeem-result").textContent = "Ungültiger Code (Prüfsumme falsch).";
-      return;
-    }
-    // Doppelteinlösung verhindern
-    const redeemHash = await sha512(code + USER_SALT);
-    if (isTransferRedeemed(redeemHash)) {
-      document.getElementById("transfer-redeem-result").textContent = "Dieser Code wurde bereits eingelöst.";
-      return;
-    }
-
     // --- Empfangsgrenze prüfen ---
     const receivedSum = getTransferReceivedSum();
     const sentSum = getTransferSentSum();

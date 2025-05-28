@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/svg+xml" href="data/MONETEN.svg">
+  <link id="light-css" rel="stylesheet" href="light.css" disabled>
 </head>
 <body>
   <div id="guide">
@@ -23,6 +24,12 @@
   </div>
   <div id="app">
     <h1>Investment-Simulator (Spielgeld: MONETEN)</h1>
+    <div style="margin-bottom:12px;">
+      <button id="toggle-lightmode-btn" title="Hellen Modus umschalten" aria-label="Hellen Modus umschalten" style="display:inline-flex;align-items:center;gap:7px;font-size:1.08em;padding:7px 18px;border-radius:7px;border:none;cursor:pointer;background:#232b3b;color:#ffe066;transition:background 0.2s;">
+        <img id="toggle-lightmode-icon" src="data/to-light.svg" alt="Hellen Modus" style="width:1.6em;height:1.6em;vertical-align:middle;">
+        <span id="toggle-lightmode-label">Hellen Modus aktivieren</span>
+      </button>
+    </div>
     <div class="balance-section">
       <p id="balance">Verfügbar: 5000 MONETEN</p>
       <select id="stock-select"></select>
@@ -114,5 +121,37 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
   <script src="extra.js"></script>
   <script src="script.js"></script>
+  <script>
+    // Lightmode Umschalter als Button mit SVG
+    const lightCss = document.getElementById('light-css');
+    const btn = document.getElementById('toggle-lightmode-btn');
+    const icon = document.getElementById('toggle-lightmode-icon');
+    const label = document.getElementById('toggle-lightmode-label');
+    function setLightModeUI(isLight) {
+      if (isLight) {
+        lightCss.disabled = false;
+        icon.src = "data/to-dark.svg";
+        icon.alt = "Dunklen Modus";
+        label.textContent = "Dunklen Modus aktivieren";
+        btn.style.background = "#e6e6e6";
+        btn.style.color = "#1c1c1c";
+      } else {
+        lightCss.disabled = true;
+        icon.src = "data/to-light.svg";
+        icon.alt = "Hellen Modus";
+        label.textContent = "Hellen Modus aktivieren";
+        btn.style.background = "#232b3b";
+        btn.style.color = "#ffe066";
+      }
+    }
+    // Zustand merken
+    let isLight = localStorage.getItem('lightmode') === '1';
+    setLightModeUI(isLight);
+    btn.addEventListener('click', function() {
+      isLight = !isLight;
+      setLightModeUI(isLight);
+      localStorage.setItem('lightmode', isLight ? '1' : '0');
+    });
+  </script>
 </body>
 </html>

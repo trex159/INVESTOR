@@ -1,0 +1,248 @@
+/* Grundfarben */
+body, #app, #guide {
+  background: #c7c7c7 !important;
+  color: #1c1c1c !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #1c1c1c !important;
+}
+
+a, a:visited {
+  color: #009c15;
+}
+
+button, input[type="button"], input[type="submit"] {
+  background: #009c15;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 18px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+button:hover, input[type="button"]:hover, input[type="submit"]:hover {
+  background: #1c1c1c;
+  color: #fff;
+}
+
+input, select, textarea {
+  background: #fff !important;
+  color: #1c1c1c !important;
+  border: 1.5px solid #96cfd4 !important;
+  border-radius: 6px !important;
+  padding: 7px 10px !important;
+  font-size: 1em !important;
+  margin-top: 2px !important;
+  margin-bottom: 2px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: border 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border: 1.5px solid #009c15 !important;
+  background: #f3f3f3 !important;
+}
+
+#balance, #stat-total-invested, #stat-investment-count, #stat-remaining {
+  color: #1c1c1c !important;
+}
+
+#investment-list li {
+  background: #f3f3f3;
+  color: #1c1c1c;
+  border-radius: 7px;
+  margin-bottom: 6px;
+  padding: 7px 10px;
+  border: 1px solid #96cfd4;
+}
+
+#investment-legend {
+  background: #e6e6e6 !important;
+  color: #1c1c1c !important;
+  box-shadow: 0 1px 6px #96cfd4;
+}
+
+#stock-info-box {
+  background: #e6e6e6 !important;
+  color: #1c1c1c !important;
+}
+
+/* Toggle-Button für Light/Darkmode */
+#toggle-lightmode-btn {
+  background: #e6e6e6 !important;
+  color: #1c1c1c !important;
+  border: 1.5px solid #96cfd4 !important;
+  box-shadow: 0 1px 6px #96cfd4;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+#toggle-lightmode-btn:hover {
+  background: #009c15 !important;
+  color: #fff !important;
+}
+#toggle-lightmode-btn:active {
+  background: #96cfd4 !important;
+  color: #1c1c1c !important;
+}
+
+/* Chart.js Canvas */
+#stock-chart {
+  background: #fff !important;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px #96cfd4;
+  border: 1.5px solid #96cfd4;
+  margin-bottom: 10px;
+}
+
+/* Chart.js Tooltip und Legende */
+.chartjs-tooltip, .chartjs-legend {
+  background: #e6e6e6 !important;
+  color: #1c1c1c !important;
+  border: 1px solid #96cfd4 !important;
+  border-radius: 7px !important;
+  box-shadow: 0 1px 6px #96cfd4 !important;
+}
+
+/* Investment-Liste Scrollbar */
+#investment-list {
+  scrollbar-color: #96cfd4 #e6e6e6;
+  scrollbar-width: thin;
+}
+
+/* Investment-Liste Buttons */
+#investment-list button {
+  background: #009c15 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 5px !important;
+  padding: 2px 10px !important;
+  font-size: 0.95em !important;
+  transition: background 0.2s;
+}
+#investment-list button:hover {
+  background: #1c1c1c !important;
+  color: #fff !important;
+}
+
+/* Overlay-Dialoge */
+#success-menu-overlay > div,
+#transfer-menu,
+#info-dialog-overlay > div,
+#transfer-limit-dialog > div {
+  background: #e6e6e6 !important;
+  color: #1c1c1c !important;
+  box-shadow: 0 4px 32px #96cfd4 !important;
+  border-radius: 14px !important;
+}
+#success-menu-overlay button,
+#transfer-menu button,
+#info-dialog-overlay button,
+#transfer-limit-dialog button {
+  background: #009c15 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 7px !important;
+  font-weight: 500 !important;
+}
+#success-menu-overlay button:hover,
+#transfer-menu button:hover,
+#info-dialog-overlay button:hover,
+#transfer-limit-dialog button:hover {
+  background: #1c1c1c !important;
+  color: #fff !important;
+}
+
+/* News-Ticker */
+#news-ticker {
+  background: #96cfd4 !important;
+  color: #1c1c1c !important;
+  border-top: 2px solid #009c15 !important;
+  font-weight: 500;
+}
+#news-ticker input[type="range"] {
+  accent-color: #009c15;
+}
+
+/* Trend-Indikator */
+#trend-indicator .trend-up {
+  color: #009c15 !important;
+}
+#trend-indicator .trend-down {
+  color: #9c0000 !important;
+}
+#trend-indicator .trend-neutral {
+  color: #1c1c1c !important;
+}
+
+.trend-up { color: #009c15 !important; }
+.trend-down { color: #9c0000 !important; }
+.trend-neutral { color: #1c1c1c !important; }
+
+#chart-title {
+  color: #1c1c1c !important;
+}
+
+#success-btn, #transfer-btn, #sell-btn, #collect-btn, #refresh-btn, #invest-btn {
+  background: #009c15 !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+#success-btn:hover, #transfer-btn:hover, #sell-btn:hover, #collect-btn:hover, #refresh-btn:hover, #invest-btn:hover {
+  background: #1c1c1c !important;
+  color: #fff !important;
+}
+
+#auto-refresh-label, #refresh-speed-label {
+  color: #1c1c1c !important;
+}
+
+/* Chart-Abschnitt */
+.chart-section {
+  background: #f3f3f3 !important;
+  border-radius: 10px !important;
+  padding: 12px 18px !important;
+  margin-bottom: 18px !important;
+  box-shadow: 0 1px 6px #96cfd4 !important;
+}
+
+/* Statistiken und Investments */
+.stats-section, .investments {
+  background: #f3f3f3 !important;
+  border-radius: 10px !important;
+  padding: 12px 18px !important;
+  margin-bottom: 18px !important;
+  box-shadow: 0 1px 6px #96cfd4 !important;
+}
+
+/* Guide */
+#guide {
+  background: #e6e6e6 !important;
+  color: #1c1c1c !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 6px #96cfd4 !important;
+  padding: 18px 24px !important;
+  margin-bottom: 18px !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #e6e6e6;
+}
+::-webkit-scrollbar-thumb {
+  background: #96cfd4;
+  border-radius: 6px;
+}
+
+#transfer-own-code {
+  background: #c7c7c7 !important;
+  color: #009c15 !important;
+  border: 1.5px solid #96cfd4 !important;
+  border-radius: 5px !important;
+  padding: 2px 8px !important;
+  font-family: 'IBM Plex Sans', 'Consolas', 'Menlo', monospace !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px;
+}
