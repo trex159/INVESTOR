@@ -161,7 +161,7 @@ let refreshIntervalMs = parseInt(refreshSpeed.value, 10);
 
 function updateBalance() {
   balanceEl.textContent = `Verfügbar: ${balance.toFixed(2)} MONETEN`;
-  localStorage.setItem("sim_balance", balance);
+  saveBalanceEncrypted(balance);
   updateStats();
 }
 
@@ -1264,12 +1264,12 @@ window.onload = async () => {
     // Internationale Brauereien
     "ABI.BR", "HEIA.AS", "CARL-B.CO", "BUD", "SAM", "DGE.L"
   ];
-  stocks.forEach(symbol => {
+ stocks.forEach(symbol => {
     stockHistory[symbol] = generateStockHistory(symbol);
     stockHistory[symbol + "_ohlc"] = generateStockHistoryOHLC(symbol);
   });
   balance = await loadBalanceEncrypted();
-  await updateBalance();
+  updateBalance(); // KEIN await mehr nötig
   await loadInvestments();
   populateStockSelect();
   updateStockInfo(stockSelect.value);
